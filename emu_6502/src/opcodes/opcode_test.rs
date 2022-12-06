@@ -1,6 +1,6 @@
 
 #[cfg(test)]
-mod answer_test {
+mod opcode_test {
     #[test]
     fn it_works() {
         let result = 2 + 2;

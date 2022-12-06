@@ -1,5 +1,6 @@
-pub mod answer;
+pub mod opcodes;
+pub mod machine;
 
 fn main() {
-    println!("Hello, world! {}", answer::answer::number());
+    println!("Hello, world! {}", opcodes::opcode::number());
 }
