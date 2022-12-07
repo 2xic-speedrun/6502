@@ -5,10 +5,6 @@ mod opcode_test;
 use crate::machine::register::Register;
 
 pub trait Opcode {
-    fn execute() -> Register;
-}
-
-pub fn number() -> i32 {
-    return 42;
+    fn execute(register: Register) -> Register;
 }
 

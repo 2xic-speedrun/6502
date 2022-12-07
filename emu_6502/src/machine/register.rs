@@ -1,5 +1,6 @@
+#[derive(Clone, Copy)]
 pub struct Register {
-    pc: i8,
+    pub pc: i8,
     ac: i8,
     x: i8,
     y: i8,
