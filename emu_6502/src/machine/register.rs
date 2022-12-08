@@ -1,11 +1,15 @@
 #[derive(Clone, Copy)]
 pub struct Register {
+    // TODO i16
     pub pc: i8,
-    ac: i8,
+    // accumulator
+    pub ac: i8,
     x: i8,
     y: i8,
+    // Status register
     sr: i8,
-    sp: i8    
+    //  Stack pointer
+    sp: i8
 }
 
 impl Register {
