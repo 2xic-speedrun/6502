@@ -20,15 +20,15 @@ impl Memory {
     }
 
     pub fn read(&self, index: usize) -> i32 {
-        if self.storage.capacity() <= index {
+        if self.storage.len() <= (index + 1) {
             return 0;
         } else {
-            return self.storage[index];
+              return self.storage[index];
         }
     }
 
     pub fn write(&mut self, index: usize, value: i32) -> i32 {
-        if self.storage.capacity() <= index{
+        if self.storage.len() <= index{
             self.storage.resize(index + 1, 0);   
         }
         self.storage[index] = value;

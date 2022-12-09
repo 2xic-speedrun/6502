@@ -13,7 +13,8 @@ use std::sync::{Arc, Mutex};
 
 fn main() {
     use crate::machine::machine::Machine;
-    let input = "a9018d0002";
+    let input = "a9018d0002a9058d0102a9088d0202a9018d0302a9058d0402a9088d0502"; 
+
     let mut machine = Machine::new(input);
     let machine_state = &machine;
 
@@ -39,15 +40,23 @@ fn main() {
         let screen_size = 128;
         let block_size = 8;
         for (i, item) in screen.iter().enumerate() {
-                if *item != 0 {
+            if *item != 0 {
+                if *item == 1 {
                     canvas.set_draw_color(Color::RGB(0, 0, 0));
-                    for n in 0..block_size { 
-                        for m in 0..block_size { 
-                            canvas.draw_point(Point::new(screen_size / 128 + n, (screen_size % 128) + m ));
-                        }
+                } else if *item == 5 {
+                    canvas.set_draw_color(Color::RGB(50, 50, 50));
+                } else if *item == 8 {
+                    canvas.set_draw_color(Color::RGB(75, 75, 75));
+                }
+                for n in 0..block_size { 
+                    for m in 0..block_size { 
+                        let y = ((i as i32) / screen_size) * block_size;
+                        let x = ((i as i32) % screen_size) * block_size;
+                        canvas.draw_point(Point::new(x + n, y + m ));
                     }
                 }
             }
+        }
 
         for event in event_pump.poll_iter() {
             match event {

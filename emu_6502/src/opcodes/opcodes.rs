@@ -50,7 +50,7 @@ pub fn get_opcode(index: u8) -> SimpleOpcode {
                 let address = unwrap_arg_2 * x + unwrap_arg_1;
                 let mut register = state.register.get();
                 (state.memory).write((address as usize), register.ac);
-                
+
                 return state;
             },
         };    
