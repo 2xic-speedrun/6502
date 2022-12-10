@@ -20,7 +20,7 @@ impl Memory {
     }
 
     pub fn read(&self, index: usize) -> i32 {
-        if self.storage.len() <= (index + 1) {
+        if self.storage.len() <= (index) {
             return 0;
         } else {
               return self.storage[index];
@@ -31,6 +31,7 @@ impl Memory {
         if self.storage.len() <= index{
             self.storage.resize(index + 1, 0);   
         }
+        println!("{} {}", index, value);
         self.storage[index] = value;
         return value;
     }

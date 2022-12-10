@@ -29,7 +29,16 @@ impl Machine {
 
     pub fn tick(self: Machine) -> Machine {
         if !(self.register.pc < (self.program.len() as i32)) {
-            return self;
+            let mut register = self.register;
+
+            register.terminated = true;
+
+
+            return Machine {
+                register: register,
+                memory: self.memory,
+                program: self.program,
+            };
         }
 
         let opcode_number = self.get_opcode();
