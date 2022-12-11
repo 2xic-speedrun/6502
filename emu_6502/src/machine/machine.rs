@@ -42,6 +42,9 @@ impl Machine {
         }
 
         let opcode_number = self.get_opcode();
+        println!("{} opcode: {:#04x}", self.register.pc, opcode_number);
+        println!("y: {}\n", self.register.y);
+
         let opcode = get_opcode(opcode_number);
         let mut arg_1: Option<u8> = None;
         let mut arg_2: Option<u8> = None;

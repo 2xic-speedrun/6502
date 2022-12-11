@@ -31,7 +31,7 @@ impl Memory {
         if self.storage.len() <= index{
             self.storage.resize(index + 1, 0);   
         }
-        println!("{} {}", index, value);
+      //  println!("{} {}", index, value);
         self.storage[index] = value;
         return value;
     }

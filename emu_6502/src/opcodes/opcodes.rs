@@ -2,7 +2,6 @@ use crate::machine::register::Register;
 use crate::machine::memory::Memory;
 use std::cell::Cell;
 
-//#[derive(Clone)]
 pub struct SimpleMachineState<'a> {
     pub register: Cell<Register>,
     pub memory: &'a mut Memory,
@@ -17,12 +16,29 @@ fn unwrap_argument(arg: Option<u8>) -> i32 {
     if let Some(arg) = arg {
         return arg.try_into().unwrap()
     } else {
-        panic!("Out of bounds")
+        panic!("Argument is out of bounds. Have you set the correct size ? ")
     }    
 }
 
-pub fn get_opcode(opcode: u8) -> SimpleOpcode {
+pub fn push(state: SimpleMachineState, value: i32) -> SimpleMachineState {
+    let mut register = state.register.get();
 
+    state.memory.write(
+        (0x0100 + register.sp) as usize,
+        value
+    );
+
+    register.sp -= 1;
+    if register.sp < 0{
+        register.sp = 0xff;
+    }
+
+    state.register.set(register);
+
+    return state;
+}
+
+pub fn get_opcode(opcode: u8) -> SimpleOpcode {
     if opcode == 0x00{
         return SimpleOpcode{
             length: 1,
@@ -38,6 +54,110 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             },
         };
     } 
+    // CLC
+    else if opcode == 0x18 {
+        return SimpleOpcode{
+            length: 1,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let mut register = state.register.get();
+                register = register.set_c(
+                    false
+                );
+
+                state.register.set(register);
+                return state;
+            },
+        };    
+    }
+    // JSR
+    else if opcode == 0x20 {
+        return SimpleOpcode{
+            length: 3,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let pc_address = state.register.get().clone().pc + 2;
+                // TODO: This is wrong, since the pc is 16 bits
+                //      it should be split in two
+                let new_state = push(state, pc_address);
+
+                let mut register = new_state.register.get();
+                let unwrap_arg_1 = unwrap_argument(arg_1);
+                let unwrap_arg_2 = unwrap_argument(arg_2);
+
+                let x: i32 = 256;                
+                let pc_address = unwrap_arg_2 * x + unwrap_arg_1;
+
+                // TODO: We should load into the correct memory slot instead of doing this
+                register.pc = (pc_address - 0x0600);
+
+                return new_state;
+            },
+        };
+    } 
+    // AND
+    else if opcode == 0x29 {
+        return SimpleOpcode{
+            length: 2,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let unwrap_arg_1 = unwrap_argument(arg_1);
+
+                let mut register = state.register.get();
+                register = register.set_z(
+                    (register.ac & unwrap_arg_1) == 0
+                );
+
+                state.register.set(register);
+                return state;
+            },
+        };    
+    }
+    // PHA
+    else if opcode == 0x48 {
+        return SimpleOpcode{
+            length: 1,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let mut register = state.register.get();
+
+                return push(state, register.ac);
+            },
+        };
+    } 
+    // JMP oper
+    else if opcode == 0x4c {
+        return SimpleOpcode{
+            length: 3,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let mut register = state.register.get();
+                let unwrap_arg_1 = unwrap_argument(arg_1);
+                let unwrap_arg_2 = unwrap_argument(arg_2);
+
+                let x: i32 = 256;                
+                let pc_address = unwrap_arg_2 * x + unwrap_arg_1;
+                
+                // TODO: We should load into the correct memory slot instead of doing this
+                register.pc = (pc_address - 0x0600);
+
+                state.register.set(register);
+
+                return state;
+            },
+        };
+    } 
+    // RTS
+    else if opcode == 0x60 {
+        return SimpleOpcode{
+            length: 1,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                // TODO: This should also be behind a separate function
+                let mut register = state.register.get();
+                let stack_value = state.memory.read((0x0100 + register.sp) as usize);
+                register.sp = (register.sp + 1) % (0xff + 1);
+
+                register.pc = stack_value;
+
+                return state;
+            },
+        };    
+    }
     // JMP (oper)
     else if opcode == 0x6c {
         return SimpleOpcode{
@@ -59,6 +179,21 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
 
                 state.register.set(register);
 
+                return state;
+            },
+        };    
+    } 
+    //PLA
+    else if opcode == 0x68 {
+        return SimpleOpcode{
+            length: 1,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let mut register = state.register.get();
+
+                register.ac = state.memory.read((0x0100 + register.sp) as usize);
+                register.sp = (register.sp + 1) % (0xff + 1);
+
+                state.register.set(register);
                 return state;
             },
         };    
@@ -131,6 +266,21 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             },
         };    
     }
+    // LDA oper
+    else if opcode == 0xa5 {
+        return SimpleOpcode{
+            length: 2,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
+                let unwrap_arg_1 = unwrap_argument(arg_1);
+
+                let mut register = state.register.get();
+                register.ac = state.memory.read((unwrap_arg_1 as usize));
+
+                state.register.set(register);
+                return state;
+            },
+        };    
+    }
     // LDA #oper
     else if opcode == 0xa9 {
         return SimpleOpcode{
@@ -176,6 +326,18 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 let address = unwrap_arg_1;
                 let mut register = state.register.get();
                 (state.memory).write((address as usize), register.ac);
+
+                return state;
+            },
+        };    
+    }
+    // TXA
+    else if opcode == 0x8a {
+        return SimpleOpcode{
+            length: 1,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {                
+                let mut register = state.register.get();
+                register.ac = register.x;
 
                 return state;
             },
@@ -233,6 +395,23 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             },
         };    
     }
+    // STA oper,Y
+    else if opcode == 0x99 {
+        return SimpleOpcode{
+            length: 3,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {                
+                let unwrap_arg_1 = unwrap_argument(arg_1);
+                let unwrap_arg_2 = unwrap_argument(arg_2);
+                let x: i32 = 256;
+                
+                let address = unwrap_arg_2 * x + unwrap_arg_1;
+                let mut register = state.register.get();
+                (state.memory).write((address as usize), register.ac);
+
+                return state;
+            },
+        };    
+    }
     // TAX
     else if opcode == 0xaa {
         return SimpleOpcode{
@@ -264,6 +443,39 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             },
         };    
     }    
+    // CPY
+    else if opcode == 0xc0 {
+        return SimpleOpcode{
+            length: 2,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {                                
+                let mut register = state.register.get();
+                let value = unwrap_argument(arg_1);
+                let mut register = state.register.get();
+
+                register = register.set_z(
+                    value == register.y
+                );
+
+                state.register.set(register);
+
+                return state;
+            },
+        };    
+    }  
+    // INY
+    else if opcode == 0xc8 {
+        return SimpleOpcode{
+            length: 1,
+            func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {                                
+                let mut register = state.register.get();
+
+                register.y = (register.y + 1) % 256;
+                state.register.set(register);
+
+                return state;
+            },
+        };    
+    }  
     // CMP
     else if opcode == 0xc9 {
         return SimpleOpcode{
@@ -311,7 +523,7 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 let address = unwrap_arg_1;
 
                 register = register.set_z(
-                    register.x == address //state.memory.read((address as usize))
+                    register.x == address
                 );
 
                 state.register.set(register);
@@ -326,7 +538,7 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {                                
                 let mut register = state.register.get();
 
-                register.x += 1;
+                register.x = (register.x + 1) % 256;
 
                 state.register.set(register);
                 return state;

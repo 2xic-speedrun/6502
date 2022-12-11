@@ -9,7 +9,7 @@ pub struct Register {
     // Status register
     sr: i8,
     //  Stack pointer
-    sp: i32,
+    pub sp: i32,
     // Not actually a register, but convenient to have it here
     pub terminated: bool,
 }
@@ -24,11 +24,24 @@ impl Register {
             x: 0,
             y: 0,
             sr: 0,
-            sp: 0,
+            sp: 0xff,
             terminated: false,
         }
     }
 
+    /*
+    From https://www.masswerk.at/6502/6502_instruction_set.html
+
+    SR Flags (bit 7 to bit 0)
+    N	Negative
+    V	Overflow
+    -	ignored
+    B	Break
+    D	Decimal (use BCD for arithmetics)
+    I	Interrupt (IRQ disable)
+    Z	Zero
+    C	Carry
+    */
     pub fn z(self) -> bool {
         return ((self.sr >> z_bit) & 1) == 1;
     }
@@ -36,10 +49,18 @@ impl Register {
     pub fn set_z(mut self, value: bool) -> Register {
         if (value) {
             self.sr = self.sr | (1 << z_bit);
-            println!("I set it now");
-            println!("{}", self.z());
         } else {
             self.sr = self.sr & !(1 << z_bit);
+        }
+
+        return self;
+    }
+
+    pub fn set_c(mut self, value: bool) -> Register {
+        if (value) {
+            self.sr = self.sr | (0 << z_bit);
+        } else {
+            self.sr = self.sr & !(0 << z_bit);
         }
 
         return self;
