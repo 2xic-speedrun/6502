@@ -181,7 +181,7 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             },
         };    
     }
-    // STA oper
+    // STX oper
     else if opcode == 0x8e {
         return SimpleOpcode{
             length: 3,
@@ -189,11 +189,11 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 let unwrap_arg_1 = unwrap_argument(arg_1);
                 let unwrap_arg_2 = unwrap_argument(arg_2);
 
-                let x: i32 = 100;                
+                let x: i32 = 256;                
                 let address = unwrap_arg_2 * x + unwrap_arg_1;
 
                 let mut register = state.register.get();
-                (state.memory).write((address as usize), register.ac);
+                (state.memory).write((address as usize), register.x);
 
                 return state;
             },
@@ -206,7 +206,7 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {                
                 let unwrap_arg_1 = unwrap_argument(arg_1);
                 let unwrap_arg_2 = unwrap_argument(arg_2);
-                let x: i32 = 100;
+                let x: i32 = 256;
                 
                 let address = unwrap_arg_2 * x + unwrap_arg_1;
                 let mut register = state.register.get();

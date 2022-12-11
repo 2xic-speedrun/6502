@@ -32,7 +32,7 @@ mod machine_test {
         assert_eq!(machine.register.ac, 1);
         machine = machine.tick();
 
-        assert_eq!(machine.memory.read(200), 1);
+        assert_eq!(machine.memory.read(0x200), 1);
     }
 
     #[test]
@@ -158,7 +158,7 @@ mod machine_test {
         assert_eq!(machine.memory.read(1 as usize), 3);
         assert_eq!(machine.memory.read(2 as usize), 7);
 
-        assert_eq!(machine.register.ac, 0xa);
+        assert_eq!(machine.register.ac, 0x0a);
     }
 }
 
