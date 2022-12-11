@@ -42,8 +42,8 @@ impl Machine {
         }
 
         let opcode_number = self.get_opcode();
-        println!("{} opcode: {:#04x}", self.register.pc, opcode_number);
-        println!("y: {}\n", self.register.y);
+        println!("pc: {:#04x} opcode: {:#04x}", self.register.pc, opcode_number);
+        println!("y: {}, x: {}, ac: {}\n", self.register.y, self.register.x, self.register.ac);
 
         let opcode = get_opcode(opcode_number);
         let mut arg_1: Option<u8> = None;
@@ -58,7 +58,7 @@ impl Machine {
 
         let mut register = self.register;
         let mut memory = self.memory;
-        let mut machine = SimpleMachineState{
+        let machine = SimpleMachineState{
             register: Cell::new(register),
             memory: &mut memory,
         };

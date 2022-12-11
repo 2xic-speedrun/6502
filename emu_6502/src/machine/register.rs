@@ -14,7 +14,9 @@ pub struct Register {
     pub terminated: bool,
 }
 
-static z_bit: i8 = 1;
+static Z_BIT: i8 = 1;
+static C_BIT: i8 = 0;
+static N_BIT: i8 = 7;
 
 impl Register {
     pub fn new() -> Register {
@@ -43,14 +45,14 @@ impl Register {
     C	Carry
     */
     pub fn z(self) -> bool {
-        return ((self.sr >> z_bit) & 1) == 1;
+        return ((self.sr >> Z_BIT) & 1) == 1;
     }
 
     pub fn set_z(mut self, value: bool) -> Register {
         if (value) {
-            self.sr = self.sr | (1 << z_bit);
+            self.sr = self.sr | (1 << Z_BIT);
         } else {
-            self.sr = self.sr & !(1 << z_bit);
+            self.sr = self.sr & !(1 << Z_BIT);
         }
 
         return self;
@@ -58,9 +60,23 @@ impl Register {
 
     pub fn set_c(mut self, value: bool) -> Register {
         if (value) {
-            self.sr = self.sr | (0 << z_bit);
+            self.sr = self.sr | (1 << C_BIT);
         } else {
-            self.sr = self.sr & !(0 << z_bit);
+            self.sr = self.sr & !(1 << C_BIT);
+        }
+
+        return self;
+    }
+
+    pub fn n(self) -> bool {
+        return ((self.sr >> N_BIT) & 1) == 1;
+    }
+
+    pub fn set_n(mut self, value: bool) -> Register {
+        if (value) {
+            self.sr = self.sr | (1 << Z_BIT);
+        } else {
+            self.sr = self.sr & !(1 << Z_BIT);
         }
 
         return self;
