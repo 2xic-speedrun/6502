@@ -196,6 +196,16 @@ mod machine_test {
         let input = "200906200c06201206a20060e8e005d0fb6000";
         let mut machine = Machine::new(input);
 
+        machine = machine.tick();
+        assert_eq!(machine.register.pc, 0x9);
+        machine = machine.tick();
+        machine = machine.tick();
+        machine = machine.tick();
+        machine = machine.tick();
+        assert_eq!(machine.register.x, 1);
+        machine = machine.tick();
+        assert_eq!(machine.register.n(), true);
+
         while !machine.register.terminated {
             machine = machine.tick();
         }
@@ -204,7 +214,9 @@ mod machine_test {
         assert_eq!(machine.register.ac, 0);
         assert_eq!(machine.register.x, 5);
         assert_eq!(machine.register.y, 0);
-        assert_eq!(machine.register.pc, 0x0613 - 0x0600);
+    //    assert_eq!(machine.register.pc, 0x0613 - 0x0600);
+        assert_eq!(machine.register.z(), true);
+        assert_eq!(machine.register.n(), false);
     }   
 
     #[test]
@@ -218,7 +230,80 @@ mod machine_test {
         }
     }
 
-    /*
+    #[test]
+    fn it_should_run_init_part_of_snake() {
+        use crate::machine::machine::Machine;
+        /*
+            Runs all the code to generateApplePosition and calls the loop.
+            Loop is just a BRK
+        */
+        let input = "200606203806200d06202a0660a9028502a9048503a9118510a9108512a90f8514a90485118513851560a5fe8500a5fe290318690285016000";
+        let mut machine = Machine::new(input);
+
+        while !machine.register.terminated {
+            machine = machine.tick();
+        }
+        assert_eq!(machine.register.pc, 0x0639 - 0x0600);
+        assert_eq!(machine.register.x, 0);
+        assert_eq!(machine.register.y, 0);
+        assert_eq!(machine.register.ac, 0x03);
+    }
+
+    #[test]
+    fn it_should_run_up_keypress_part_of_snake() {
+        use crate::machine::machine::Machine;
+        /*
+            Runs all the code to generateApplePosition and calls the loop.
+            Loop is just call for readkeys and BRK
+        */
+        let input = "200606203806200d06202a0660a9028502a9048503a9118510a9108512a90f8514a90485118513851560a5fe8500a5fe2903186902850160203e064c4406a5ffc977606000";
+        let mut machine = Machine::new(input);
+
+        while !machine.register.terminated {
+            machine = machine.tick();
+        }
+        assert_eq!(machine.register.x, 0);
+        assert_eq!(machine.register.y, 0);
+        assert_eq!(machine.register.ac, 0x0);
+        assert_eq!(machine.register.z(), false);
+        assert_eq!(machine.register.n(), true);
+        assert_eq!(machine.register.pc, 0x0645 - 0x0600);
+    }
+
+    #[test]
+    fn it_should_run_keypress_part_of_snake() {
+        use crate::machine::machine::Machine;
+        /*
+            Runs all the code to generateApplePosition and calls the loop.
+            Loop is just call for readkeys and BRK
+        */
+
+        let input = "200606203806200d06202a0660a9028502a9048503a9118510a9108512a90f8514a90485118513851560a5fe8500a5fe2903186902850160203e064c7e06a5ffc977f00dc964f014c973f01bc961f02260a9042402d026a901850260a9082402d01ba902850260a9012402d010a904850260a9022402d005a9088502606000";
+        let mut machine = Machine::new(input);
+
+        while !machine.register.terminated {
+            machine = machine.tick();
+            if machine.register.pc == 0x061f {
+                assert_eq!(machine.register.ac, 0x0f);
+            } else if machine.register.pc == 0x0623 {
+                assert_eq!(machine.register.ac, 0x04);
+            }else if machine.register.pc == 0x0632 || machine.register.pc == 0x0640 {
+                assert_eq!(machine.register.ac, 0x0);
+            } else if machine.register.pc == 0x0611 {
+                assert_eq!(machine.register.ac, 0x2);
+            } else if machine.register.pc == 0x063b {
+                assert_eq!(machine.register.ac, 0);
+            }
+        }
+        assert_eq!(machine.register.pc, 0x067f - 0x0600);
+        assert_eq!(machine.register.x, 0);
+        assert_eq!(machine.register.y, 0);
+        assert_eq!(machine.register.z(), false);
+        assert_eq!(machine.register.n(), true);
+        assert_eq!(machine.register.ac, 0x0);
+    }
+
+
     #[test]
     fn it_should_run_snake() {
         use crate::machine::machine::Machine;
@@ -232,6 +317,5 @@ mod machine_test {
             machine = machine.tick();
         }
     }
-    */
 }
 

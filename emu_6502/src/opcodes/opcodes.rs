@@ -93,10 +93,10 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
         return SimpleOpcode{
             length: 3,
             func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
-                let pc_address = state.register.get().clone().pc + 2;
+                let pc_address = state.register.get().clone().pc;
                 // TODO: This is wrong, since the pc is 16 bits
                 //      it should be split in two
-                let new_state = push(state, pc_address + 2);
+                let new_state = push(state, pc_address + 3);
 
                 let mut register = new_state.register.get();
                 let unwrap_arg_1 = unwrap_argument(arg_1);
@@ -190,10 +190,13 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             func: |state: SimpleMachineState, arg_1: Option<u8>, arg_2: Option<u8>| -> SimpleMachineState {
                 // TODO: This should also be behind a separate function
                 let mut register = state.register.get();
-                let stack_value = state.memory.read((0x0100 + register.sp) as usize);
+                // TODO: this is dirty
+                let stack_value = state.memory.read((0x0100 + (register.sp + 1)) as usize);
                 register.sp = (register.sp + 1) % (0xff + 1);
 
                 register.pc = stack_value - 1;
+
+                state.register.set(register);
 
                 return state;
             },
@@ -239,7 +242,7 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
             },
         };    
     } 
-    // LDA #oper
+    // ADC
     else if opcode == 0x69 {
         return SimpleOpcode{
             length: 2,
@@ -248,7 +251,7 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
 
                 let mut register = state.register.get();
 
-                register.ac += unwrap_arg_1 ;
+                register.ac += unwrap_arg_1 + (register.z() as i32);
                 register.ac = register.ac % 256;
 
                 state.register.set(register);
@@ -596,7 +599,10 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                     register.ac == address
                 );
                 register = register.set_n(
-                    register.ac < address
+                    (register.ac - address) < 0 && register.ac != address
+                );
+                register = register.set_c(
+                    (register.ac > address) 
                 );
                 state.register.set(register);
 
@@ -615,6 +621,13 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 register = register.set_z(
                     register.ac == address
                 );
+                register = register.set_n(
+                    (register.ac - address) < 0 && register.ac != address
+                );
+                register = register.set_c(
+                    (register.ac > address) 
+                );
+
                 state.register.set(register);
 
                 return state;
@@ -648,18 +661,18 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 let mut register = state.register.get();
                 
                 let unwrap_arg_1 = unwrap_argument(arg_1);
-                let address = unwrap_arg_1;
+                let value = unwrap_arg_1;
 
                 register = register.set_z(
-                    register.x == address
+                    register.x == value
                 );
-                /*
-                -> TODO This is causing some problems 
-
                 register = register.set_n(
-                    register.x < address
+                    (register.x - value) < 0 && register.x != value
                 );
-                */
+                register = register.set_c(
+                    (register.x > value) 
+                );
+
                 state.register.set(register);
                 return state;
             },
@@ -679,6 +692,9 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 );
                 register = register.set_n(
                     register.x < value
+                );
+                register = register.set_c(
+                    register.x > value
                 );
 
                 state.register.set(register);

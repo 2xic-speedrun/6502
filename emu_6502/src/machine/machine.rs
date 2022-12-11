@@ -42,7 +42,7 @@ impl Machine {
         }
 
         let opcode_number = self.get_opcode();
-        println!("pc: {:#04x} opcode: {:#04x}", self.register.pc, opcode_number);
+        println!("pc: {:#04x} sp: {:#04x} opcode: {:#04x}", self.register.pc, self.register.sp, opcode_number);
         println!("y: {}, x: {}, ac: {}\n", self.register.y, self.register.x, self.register.ac);
 
         let opcode = get_opcode(opcode_number);

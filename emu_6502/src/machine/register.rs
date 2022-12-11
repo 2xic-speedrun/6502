@@ -68,15 +68,19 @@ impl Register {
         return self;
     }
 
+    pub fn c(self) -> bool {
+        return ((self.sr >> C_BIT) & 1) == 1;
+    }
+
     pub fn n(self) -> bool {
         return ((self.sr >> N_BIT) & 1) == 1;
     }
 
     pub fn set_n(mut self, value: bool) -> Register {
         if (value) {
-            self.sr = self.sr | (1 << Z_BIT);
+            self.sr = self.sr | (1 << N_BIT);
         } else {
-            self.sr = self.sr & !(1 << Z_BIT);
+            self.sr = self.sr & !(1 << N_BIT);
         }
 
         return self;
