@@ -20,6 +20,34 @@ fn unwrap_argument(arg: Option<u8>) -> i32 {
     }    
 }
 
+pub struct Comparison {
+    pub n: bool,
+    pub z: bool,
+    pub c: bool,
+}
+
+fn cmp(register: i32, op: i32) -> Comparison {
+    if register < op {
+        return Comparison{
+            z: false,
+            c: false,
+            n: (register - op) < 0
+        };
+    } else if register == op {
+        return Comparison{
+            z: true,
+            c: true,
+            n: false
+        };
+    } else  {
+        return Comparison{
+            z: false,
+            c: true,
+            n: (register - op) < 0
+        };
+    }
+}
+
 pub fn push(state: SimpleMachineState, value: i32) -> SimpleMachineState {
     let mut register = state.register.get();
 
@@ -318,7 +346,11 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 let unwrap_arg_1 = unwrap_argument(arg_1);
 
                 let mut register = state.register.get();
-                register.ac = state.memory.read((unwrap_arg_1 as usize));
+                let value = state.memory.read((unwrap_arg_1 as usize));
+                register = register.set_n(
+                    (register.ac - value) < 0
+                );
+                register.ac = value;
 
                 state.register.set(register);
                 return state;
@@ -595,14 +627,15 @@ pub fn get_opcode(opcode: u8) -> SimpleOpcode {
                 let mut register = state.register.get();
 
                 let address = state.memory.read(unwrap_argument(arg_1) as usize);
+                let comparison: Comparison = cmp(register.ac, address);
                 register = register.set_z(
-                    register.ac == address
+                    comparison.z
                 );
                 register = register.set_n(
-                    (register.ac - address) < 0 && register.ac != address
+                    comparison.n
                 );
                 register = register.set_c(
-                    (register.ac > address) 
+                    comparison.c
                 );
                 state.register.set(register);
 

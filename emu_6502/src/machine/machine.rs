@@ -74,7 +74,7 @@ impl Machine {
         };
     }
 
-    fn get_opcode(&self) -> u8 {
+    pub fn get_opcode(&self) -> u8 {
         return self.program_read(self.register.pc);
     }
 
